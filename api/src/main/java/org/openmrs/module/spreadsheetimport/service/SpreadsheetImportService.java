@@ -23,7 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public interface SpreadsheetImportService extends OpenmrsService {
 	
-	public SessionFactory getSessionFactory();
+	SessionFactory getSessionFactory();
 	
 	@Transactional(readOnly = true)
 	List<SpreadsheetImportTemplate> getAllTemplates();
@@ -37,5 +37,5 @@ public interface SpreadsheetImportService extends OpenmrsService {
 	@Transactional
 	void deleteSpreadsheetImportTemplate(SpreadsheetImportTemplate template);
 	
-	public String getPredfinedValueById(int id);
+	String getPredfinedValueById(int id);
 }

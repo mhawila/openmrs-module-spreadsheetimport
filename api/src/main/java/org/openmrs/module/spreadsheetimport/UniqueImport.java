@@ -57,11 +57,7 @@ public class UniqueImport implements Comparable {
 					return true;
 				} else if (datasetIdx == null || that.datasetIdx == null) {
 					return false;
-				} else if (datasetIdx.equals(that.datasetIdx)) {
-					return true;
-				} else {
-					return false;
-				}
+				} else return datasetIdx.equals(that.datasetIdx);
 			}
 		}
 		return super.equals(arg0);

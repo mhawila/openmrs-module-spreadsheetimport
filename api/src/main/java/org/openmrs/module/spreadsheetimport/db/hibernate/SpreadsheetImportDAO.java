@@ -21,7 +21,7 @@ import org.openmrs.module.spreadsheetimport.SpreadsheetImportTemplate;
 
 public interface SpreadsheetImportDAO {
 
-	public SessionFactory getSessionFactory();
+	SessionFactory getSessionFactory();
 	
     List<SpreadsheetImportTemplate> getAllTemplates();
 
@@ -31,5 +31,5 @@ public interface SpreadsheetImportDAO {
 
     void deleteSpreadsheetImportTemplate(SpreadsheetImportTemplate template);
     
-    public String getPredfinedValueById(int id);
+    String getPredfinedValueById(int id);
 }

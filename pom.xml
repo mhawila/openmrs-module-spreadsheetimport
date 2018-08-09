@@ -3,8 +3,8 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>org.openmrs.module</groupId>
-	<artifactId>spreadsheetimport-parent</artifactId>
-	<version>0.5.15-SNAPSHOT</version>
+	<artifactId>spreadsheetimport</artifactId>
+	<version>1.0.0-SNAPSHOT</version>
 	<packaging>pom</packaging>
 	<name>Spreadsheet Import Module</name>
 	<description>Parent project for Spreadsheet Import Module</description>
@@ -24,20 +24,6 @@
 
 	<dependencyManagement>
 		<dependencies>
-			<!--
-			Libraries from lib to add as dependencies with compile or runtime scope:
-			lib/poi-3.6-20091214.jar
-lib/poi-ooxml-3.6-20091214.jar
-				
-			Find matching dependencies in maven central repository.
-			<dependency>
-				<groupId>org.other.library</groupId>
-				<artifactId>library-name</artifactId>
-				<version>library.version</version>
-				<scope>compile</scope>
-			</dependency>
-			-->
-			
 			<dependency>
 				<groupId>org.openmrs.api</groupId>
 				<artifactId>openmrs-api</artifactId>
@@ -56,7 +42,7 @@ lib/poi-ooxml-3.6-20091214.jar
 				<groupId>org.openmrs.test</groupId>
 				<artifactId>openmrs-test</artifactId>
 				<version>${openMRSVersion}</version>
-				<type>jar</type>
+				<type>test-jar</type>
 				<scope>test</scope>
 			</dependency>
 			<dependency>
@@ -73,7 +59,7 @@ lib/poi-ooxml-3.6-20091214.jar
 	</dependencyManagement>
 
 	<properties>
-		<openMRSVersion>1.6.2</openMRSVersion>
+		<openMRSVersion>2.0.0</openMRSVersion>
 	</properties>
 
 	<build>
