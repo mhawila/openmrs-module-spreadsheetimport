@@ -13,22 +13,13 @@
  */
 package org.openmrs.module.spreadsheetimport.web.controller;
 
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import javax.servlet.http.HttpServletRequest;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.openmrs.Concept;
 import org.openmrs.ConceptDatatype;
-import org.openmrs.Encounter;
 import org.openmrs.FieldType;
 import org.openmrs.Form;
 import org.openmrs.FormField;
-import org.openmrs.api.EncounterService;
 import org.openmrs.api.FormService;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.spreadsheetimport.DatabaseBackend;
@@ -48,6 +39,12 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.SessionAttributes;
 
+import javax.servlet.http.HttpServletRequest;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 /**
  * This controller backs and saves the Spreadsheet Import module settings
  */
@@ -66,8 +63,7 @@ public class SpreadsheetImportFormController {
 		return DatabaseBackend.getTableColumnMap();
 	}
 	
-//	@RequestMapping(method = RequestMethod.GET)
-	@RequestMapping(value = {"/module/spreadsheetimport/spreadsheetimport.form"}, method = RequestMethod.GET)
+	@RequestMapping(method = RequestMethod.GET)
 	public String setupForm(@RequestParam(value = "id", required = false) Integer id, ModelMap model,
 	                        HttpServletRequest request) {
 		SpreadsheetImportTemplate template = null;
@@ -86,7 +82,7 @@ public class SpreadsheetImportFormController {
 		return "/module/spreadsheetimport/spreadsheetimportFormColumn";
 	}
 	
-	@RequestMapping(value = {"/module/spreadsheetimport/spreadsheetimport.form"}, method = RequestMethod.POST)
+	@RequestMapping(method = RequestMethod.POST)
 	public String processSubmit(@ModelAttribute("template") SpreadsheetImportTemplate template, BindingResult result,
 	                            HttpServletRequest request) throws Exception {
 
