@@ -117,19 +117,19 @@ public class SpreadsheetImportImportFormController {
 			      response.addHeader("content-disposition", "inline;filename=" + returnedFile.getName());
 			      IOUtils.copy(is, response.getOutputStream());			      
 			      response.flushBuffer();
-			    } catch (IOException ex) {
-			      log.info("Error writing file to output stream");
-			    }
+			} catch (IOException ex) {
+			  log.info("Error writing file to output stream");
+			}
 		}
-				
+
 		if (!messageString.isEmpty()) {
 			if (succeeded) {
 				request.getSession().setAttribute(WebConstants.OPENMRS_MSG_ATTR, messageString);
-			} else {	
+			} else {
 				request.getSession().setAttribute(WebConstants.OPENMRS_ERROR_ATTR, "Error processing request, " + messageString);
 			}
 		}
-		
+
 		return "/module/spreadsheetimport/spreadsheetimportImportForm";
 	}
 		

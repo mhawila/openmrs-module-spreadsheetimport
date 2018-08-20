@@ -619,7 +619,8 @@ public class DatabaseBackend {
 							importedTables.contains("person") &&
 							!importedTables.contains("patient")) {
 
-							sql = "insert into patient (patient_id, creator) values (" + columnGeneratedKey + ", " + Context.getAuthenticatedUser().getId() + ")";
+							sql = "insert into patient (patient_id, creator, date_created) values (" + columnGeneratedKey + ", " +
+									Context.getAuthenticatedUser().getId() + ", now())";
 							if (log.isDebugEnabled()) {
 								log.debug(sql);
 							}	
@@ -660,8 +661,6 @@ public class DatabaseBackend {
 						columnNames += ",obs_datetime";
 						columnValues += ",now()";						
 					}
-					columnNames += ", date_created";
-					columnValues += ",now()";
 				}
 				
 				// SPECIAL TREATMENT: if this is patient identifier, then set location_id to NULL, to avoid CONSTRAINT `patient_identifier_ibfk_2` FOREIGN KEY (`location_id`) REFERENCES `location` (`location_id`))
@@ -673,6 +672,10 @@ public class DatabaseBackend {
 				// creator
 				columnNames += ",creator";
 				columnValues += "," + Context.getAuthenticatedUser().getId();
+
+				// date_created
+				columnNames += ", date_created";
+				columnValues += ",now()";
 				
 				// uuid
 				DatabaseMetaData dmd = conn.getMetaData();
