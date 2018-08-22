@@ -14,6 +14,7 @@
 package org.openmrs.module.spreadsheetimport.web.controller;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.openmrs.api.context.Context;
@@ -70,29 +71,6 @@ public class SpreadsheetImportImportFormController {
 	                            HttpServletRequest request,
 	                            HttpServletResponse response) throws Exception {
 		
-		
-//		Map<UniqueImport, Set<SpreadsheetImportTemplateColumn>> rowDataTemp = template.getMapOfUniqueImportToColumnSetSortedByImportIdx();
-//
-//		for (UniqueImport uniqueImport : rowDataTemp.keySet()) {
-//			Set<SpreadsheetImportTemplateColumn> columnSet = rowDataTemp.get(uniqueImport);
-//			boolean isFirst = true;
-//			for (SpreadsheetImportTemplateColumn column : columnSet) {
-//
-//				if (isFirst) {
-//					// Should be same for all columns in unique import
-//					System.out.println("SpreadsheetImportUtil.importTemplate: column.getColumnPrespecifiedValues(): " + column.getColumnPrespecifiedValues().size());
-//					if (column.getColumnPrespecifiedValues().size() > 0) {
-//						Set<SpreadsheetImportTemplateColumnPrespecifiedValue> columnPrespecifiedValueSet = column.getColumnPrespecifiedValues();
-//						for (SpreadsheetImportTemplateColumnPrespecifiedValue columnPrespecifiedValue : columnPrespecifiedValueSet) {
-//							System.out.println(columnPrespecifiedValue.getPrespecifiedValue().getValue());
-//						}
-//					}
-//				}
-//			}
-//		}
-
-		
-		
 		List<String> messages = new ArrayList<String>();
 		boolean rollbackTransaction = true;
 		if (request.getParameter("rollbackTransaction") == null) {
@@ -112,17 +90,18 @@ public class SpreadsheetImportImportFormController {
 		if (succeeded) {
 			messageString += "Success!";
 			try {	    	
-			      InputStream is = new FileInputStream(returnedFile);
-			      response.setContentType("application/ms-excel");
-			      response.addHeader("content-disposition", "inline;filename=" + returnedFile.getName());
-			      IOUtils.copy(is, response.getOutputStream());			      
-			      response.flushBuffer();
+				InputStream is = new FileInputStream(returnedFile);
+				response.setContentType("application/ms-excel");
+				response.addHeader("content-disposition", "inline;filename=" + returnedFile.getName());
+				IOUtils.copy(is, response.getOutputStream());
+				response.flushBuffer();
+				return null;
 			} catch (IOException ex) {
 			  log.info("Error writing file to output stream");
 			}
 		}
 
-		if (!messageString.isEmpty()) {
+		if (StringUtils.isNotBlank(messageString)) {
 			if (succeeded) {
 				request.getSession().setAttribute(WebConstants.OPENMRS_MSG_ATTR, messageString);
 			} else {

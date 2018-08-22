@@ -375,7 +375,7 @@ public class SpreadsheetImportUtil {
 		}
 		
 		// write back Excel file to a temp location
-		File returnFile = File.createTempFile("sim", ".xls");
+		File returnFile = File.createTempFile("imported_spreadsheet", ".xls");
 		FileOutputStream fos = new FileOutputStream(returnFile);
 		wb.write(fos);
 		fos.close();
