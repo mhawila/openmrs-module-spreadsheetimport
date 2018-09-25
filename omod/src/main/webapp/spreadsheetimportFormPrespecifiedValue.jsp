@@ -19,6 +19,36 @@
 <%@ taglib prefix="formsim" uri="http://www.springframework.org/tags/form" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 
+<c:set var="contextPath" value="${pageContext.request.contextPath}" />
+<script type="text/javascript">
+	$j(function() {
+	    var conceptRestUrl = "${contextPath}/ws/rest/v1/concept";
+	    $j('.concept-autocomplete').autocomplete({
+            source: function(request, response) {
+                $j.getJSON(conceptRestUrl, { q: request.term }, function(data, textStatus, jqXHR) {
+                    if(data.results) {
+                        data = data.results;
+					}
+					data = data.map(function(item) {
+					    return {
+					        label: item.display,
+							value: item.uuid,
+						};
+					});
+                    response(data);
+				});
+            },
+            minLength: 2,
+            select: function( event, ui ) {
+                event.preventDefault();
+                var correspondingHiddenFieldIdSelector = '#' + $j(this).attr('id') + '-hidden';
+                $j(correspondingHiddenFieldIdSelector).val(ui.item.value);
+                $j(this).val(ui.item.label);
+            }
+        });
+	});
+</script>
+
 <b>Step 2 of 2: Pre-specified Values</b>
 <p/>
 
@@ -53,14 +83,21 @@
 					</tr>
 					<c:forEach var="prespecifiedValue" items="${template.prespecifiedValues}" varStatus="status">
 						<tr>
-							<td>${prespecifiedValue.prettyTableName}</td>								
-							<td><formsim:select path="prespecifiedValues[${status.index}].value">
-
-
-
-								<formsim:option value="" label="${prespecifiedValues[status.index].value}"/>
-								<formsim:options items="${prespecifiedValue.mapNameToAllowedValue}" itemLabel="name" itemValue="value"  />
-							</formsim:select></td>
+							<td>${prespecifiedValue.prettyTableName}</td>
+							<td>
+								<c:choose>
+									<c:when test="${prespecifiedValue.prettyTableName == 'Concept'}">
+										<formsim:hidden path="prespecifiedValues[${status.index}].value" id="concept-${status.index}-hidden"/>
+										<input type="text" class="concept-autocomplete" id="concept-${status.index}"/>
+									</c:when>
+									<c:otherwise>
+										<formsim:select path="prespecifiedValues[${status.index}].value">
+											<formsim:option value="" label="${prespecifiedValues[status.index].value}"/>
+											<formsim:options items="${prespecifiedValue.mapNameToAllowedValue}" itemLabel="name" itemValue="value"  />
+										</formsim:select>
+									</c:otherwise>
+								</c:choose>
+							</td>
 							<td><table>
 								<tr>
 									<th>Name</th>

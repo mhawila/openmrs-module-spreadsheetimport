@@ -20,16 +20,19 @@ import org.openmrs.ConceptDatatype;
 import org.openmrs.FieldType;
 import org.openmrs.Form;
 import org.openmrs.FormField;
+import org.openmrs.api.ConceptService;
 import org.openmrs.api.FormService;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.spreadsheetimport.DatabaseBackend;
 import org.openmrs.module.spreadsheetimport.SpreadsheetImportTemplate;
 import org.openmrs.module.spreadsheetimport.SpreadsheetImportTemplateColumn;
 import org.openmrs.module.spreadsheetimport.SpreadsheetImportTemplateColumnPrespecifiedValue;
+import org.openmrs.module.spreadsheetimport.SpreadsheetImportTemplatePrespecifiedValue;
 import org.openmrs.module.spreadsheetimport.SpreadsheetImportUtil;
 import org.openmrs.module.spreadsheetimport.UniqueImport;
 import org.openmrs.module.spreadsheetimport.service.SpreadsheetImportService;
 import org.openmrs.module.spreadsheetimport.validators.SpreadsheetImportTemplateValidator;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
 import org.springframework.validation.BindingResult;
@@ -243,7 +246,8 @@ public class SpreadsheetImportFormController {
 			return "/module/spreadsheetimport/spreadsheetimportFormColumn";			
 
 		}
-		
+
+		setConceptIdsForConceptUuidPrespecifiedValues(template.getPrespecifiedValues());
 		new SpreadsheetImportTemplateValidator().validate(template, result);
 
 		if (result.hasErrors()) {
@@ -268,5 +272,22 @@ public class SpreadsheetImportFormController {
 		Context.getService(SpreadsheetImportService.class).saveSpreadsheetImportTemplate(template);
 		return "redirect:/module/spreadsheetimport/spreadsheetimport.list";
 		
+	}
+
+	private void setConceptIdsForConceptUuidPrespecifiedValues(Set<SpreadsheetImportTemplatePrespecifiedValue> prespecifiedValues) {
+		for(SpreadsheetImportTemplatePrespecifiedValue prespecifiedValue: prespecifiedValues) {
+			if("concept.concept_id".equals(prespecifiedValue.getTableDotColumn()) && prespecifiedValue.getValue() != null) {
+				try {
+					// Check whether it can be parsed to an integer if it is a uuid set by ajax rest call.
+					Integer.parseInt(prespecifiedValue.getValue());
+				} catch (NumberFormatException nfe) {
+					// Assume it is a UUID
+					Concept concept = Context.getConceptService().getConceptByUuid(prespecifiedValue.getValue());
+					if(concept != null) {
+						prespecifiedValue.setValue(concept.getConceptId().toString());
+					}
+				}
+			}
+		}
 	}
 }
