@@ -27,7 +27,7 @@
 	Spreadsheet to upload: <input type="file" name="file" /> <br/>
 	Sheet: <input type="text" name="sheet" value="Sheet1"/> <br/>
 <!-- BEGIN: FOR TESTING ONLY -->
-	<input type="checkbox" name="rollbackTransaction"/> Rollback transaction <br/>
+	<input type="checkbox" name="rollbackTransaction"/> Rollback transaction (Use this when testing)<br/>
 <!-- END: FOR TESTING ONLY -->
 	<input type="submit" value="Upload"/>
 </form>
