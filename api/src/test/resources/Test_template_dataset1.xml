@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<dataset>
+    <person_attribute_type person_attribute_type_id="90" name="Father education" description="father's education" format="java.lang.String" retired="false"
+                           searchable="false" creator="1" date_created="2007-05-07 09:59:23.0" uuid="b3b6f940-a32e-44c7-91b3-292d97667518" sort_weight="1"/>
+    <person_attribute_type person_attribute_type_id="91" name="Family Income" description="income" format="java.lang.Float" retired="false"
+                           searchable="false" creator="1" date_created="2007-05-05 09:59:23.0" uuid="b3b68e40-a32e-44c7-91b3-292d97667518" sort_weight="1"/>
+
+    <patient_identifier_type patient_identifier_type_id="90" name="Unit ID" description="Unique number used in OpenMRS" creator="1" required="0"
+                             date_created="2005-09-20 00:00:00.0" retired="false" uuid="1a239fe9-38bc-4ab3-b180-320988c0b968"/>
+    <patient_identifier_type patient_identifier_type_id="91" name="Study ID" description="Unique number used in OpenMRS" creator="1" required="0"
+                             date_created="2005-09-22 00:00:00.0"  retired="false" uuid="1a239ab9-38bc-4ab3-b180-320988c0b968"/>
+
+    <spreadsheetimport_template id="1" name="AKTH Vitals Example" description="Imports participants personal information and few vitals (height and weight)"
+                                creator="1" date_created="2018-09-27 13:30:01" encounter="true"/>
+
+
+    <spreadsheetimport_template_column id="1" template_id="1" name="PARTICIPANT ID" database_table_dot_column="patient_identifier.identifier"
+                                        database_table_dataset_index="0"  column_import_index="0" disallow_duplicate_value="0"/>
+    <spreadsheetimport_template_column id="2" template_id="1" name="DATE OF BIRTH" database_table_dot_column="person.birthdate" column_import_index="0"
+                                       disallow_duplicate_value="0"/>
+    <spreadsheetimport_template_column id="3" template_id="1" name="HOSP NO" database_table_dot_column="patient_identifier.identifier"
+                                       database_table_dataset_index="1" column_import_index="7" disallow_duplicate_value="0"/>
+    <spreadsheetimport_template_column id="4" template_id="1" name="SEX" database_table_dot_column="person.gender"
+                                       column_import_index="1" disallow_duplicate_value="0"/>
+    <spreadsheetimport_template_column id="5" template_id="1" name="STATUS" database_table_dot_column="person.dead"
+                                       column_import_index="2" disallow_duplicate_value="0"/>
+    <spreadsheetimport_template_column id="6" template_id="1" name="PARENTAL EDUCATION" database_table_dot_column="person_attribute.value"
+                                       database_table_dataset_index="0" column_import_index="8" disallow_duplicate_value="0"/>
+    <spreadsheetimport_template_column id="7" template_id="1" name="PARENTAL INCOME" database_table_dot_column="person_attribute.value"
+                                       database_table_dataset_index="1" column_import_index="9" disallow_duplicate_value="0"/>
+    <spreadsheetimport_template_column id="8" template_id="1" name="WEIGHT" database_table_dot_column="obs.value_numeric"
+                                       database_table_dataset_index="0" column_import_index="4" disallow_duplicate_value="0"/>
+    <spreadsheetimport_template_column id="9" template_id="1" name="DATE OF LAST VISIT " database_table_dot_column="encounter.encounter_datetime"
+                                       column_import_index="3" disallow_duplicate_value="0"/>
+    <spreadsheetimport_template_column id="10" template_id="1" name="HEIGHT" database_table_dot_column="obs.value_numeric"
+                                       database_table_dataset_index="1" column_import_index="5" disallow_duplicate_value="0"/>
+
+    <spreadsheetimport_template_column_column id="1" template_column_id_import_first="2" template_column_id_import_next="1" foreign_key_column_name="patient_id"/>
+    <spreadsheetimport_template_column_column id="2" template_column_id_import_first="2" template_column_id_import_next="3" foreign_key_column_name="patient_id"/>
+    <spreadsheetimport_template_column_column id="3" template_column_id_import_first="2" template_column_id_import_next="6" foreign_key_column_name="person_id"/>
+    <spreadsheetimport_template_column_column id="4" template_column_id_import_first="2" template_column_id_import_next="7" foreign_key_column_name="person_id"/>
+    <spreadsheetimport_template_column_column id="5" template_column_id_import_first="2" template_column_id_import_next="8" foreign_key_column_name="person_id"/>
+    <spreadsheetimport_template_column_column id="6" template_column_id_import_first="2" template_column_id_import_next="9" foreign_key_column_name="patient_id"/>
+    <spreadsheetimport_template_column_column id="7" template_column_id_import_first="9" template_column_id_import_next="8" foreign_key_column_name="encounter_id"/>
+    <spreadsheetimport_template_column_column id="8" template_column_id_import_first="2" template_column_id_import_next="10" foreign_key_column_name="person_id"/>
+    <spreadsheetimport_template_column_column id="9" template_column_id_import_first="9" template_column_id_import_next="10" foreign_key_column_name="encounter_id"/>
+
+    <!--<spreadsheetimport_template_prespecified_value id="135" template_id="1" database_table_dot_column="form.form_id" value="15"/>-->
+    <spreadsheetimport_template_prespecified_value id="136" template_id="1" database_table_dot_column="location.location_id" value="1"/>
+    <spreadsheetimport_template_prespecified_value id="137" template_id="1" database_table_dot_column="encounter_type.encounter_type_id" value="1"/>
+    <spreadsheetimport_template_prespecified_value id="138" template_id="1" database_table_dot_column="concept.concept_id" value="5089"/>
+    <spreadsheetimport_template_prespecified_value id="139" template_id="1" database_table_dot_column="concept.concept_id" value="5497"/>
+    <spreadsheetimport_template_prespecified_value id="140" template_id="1" database_table_dot_column="patient_identifier_type.patient_identifier_type_id" value="90"/>
+    <spreadsheetimport_template_prespecified_value id="141" template_id="1" database_table_dot_column="patient_identifier_type.patient_identifier_type_id" value="91"/>
+    <spreadsheetimport_template_prespecified_value id="142" template_id="1" database_table_dot_column="person_attribute_type.person_attribute_type_id" value="90"/>
+    <spreadsheetimport_template_prespecified_value id="143" template_id="1" database_table_dot_column="person_attribute_type.person_attribute_type_id" value="91"/>
+
+    <!--<spreadsheetimport_template_column_prespecified_value id="1" template_column_id="9" template_prespecified_value_id="135" foreign_key_column_name="form_id"/>-->
+    <spreadsheetimport_template_column_prespecified_value id="2" template_column_id="9" template_prespecified_value_id="136" foreign_key_column_name="location_id"/>
+    <spreadsheetimport_template_column_prespecified_value id="3" template_column_id="9" template_prespecified_value_id="137" foreign_key_column_name="encounter_type"/>
+    <spreadsheetimport_template_column_prespecified_value id="4" template_column_id="8" template_prespecified_value_id="138" foreign_key_column_name="concept_id"/>
+    <spreadsheetimport_template_column_prespecified_value id="5" template_column_id="10" template_prespecified_value_id="139" foreign_key_column_name="concept_id"/>
+    <spreadsheetimport_template_column_prespecified_value id="6" template_column_id="1" template_prespecified_value_id="140" foreign_key_column_name="identifier_type"/>
+    <spreadsheetimport_template_column_prespecified_value id="7" template_column_id="3" template_prespecified_value_id="141" foreign_key_column_name="identifier_type"/>
+    <spreadsheetimport_template_column_prespecified_value id="8" template_column_id="6" template_prespecified_value_id="142" foreign_key_column_name="person_attribute_type_id"/>
+    <spreadsheetimport_template_column_prespecified_value id="9" template_column_id="7" template_prespecified_value_id="143" foreign_key_column_name="person_attribute_type_id"/>
+</dataset>

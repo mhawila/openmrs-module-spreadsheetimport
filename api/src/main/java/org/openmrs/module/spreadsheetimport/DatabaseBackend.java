@@ -13,6 +13,12 @@
  */
 package org.openmrs.module.spreadsheetimport;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.openmrs.api.context.Context;
+import org.openmrs.module.spreadsheetimport.objects.NameValue;
+import org.openmrs.util.DatabaseUpdater;
+
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.Date;
@@ -23,8 +29,6 @@ import java.sql.SQLSyntaxErrorException;
 import java.sql.Statement;
 import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -34,11 +38,6 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.openmrs.api.context.Context;
-import org.openmrs.module.spreadsheetimport.objects.NameValue;
 
 /**
  *
@@ -106,10 +105,10 @@ public class DatabaseBackend {
 		try {
 			// Connect to db
 			Class.forName("com.mysql.jdbc.Driver").newInstance();
-			
+
 			Properties p = Context.getRuntimeProperties();
 			String url = p.getProperty("connection.url");
-			
+
 			conn = DriverManager.getConnection(url, p.getProperty("connection.username"),
 			    p.getProperty("connection.password"));
 			
@@ -344,15 +343,7 @@ public class DatabaseBackend {
 		String encounterId = null;
 		
 		try {
-			
-			// Connect to db
-			Class.forName("com.mysql.jdbc.Driver").newInstance();
-			
-			Properties p = Context.getRuntimeProperties();
-			String url = p.getProperty("connection.url");
-			
-			conn = DriverManager.getConnection(url, p.getProperty("connection.username"),
-			    p.getProperty("connection.password"));
+			conn = DatabaseUpdater.getConnection();
 			
 			conn.setAutoCommit(false);
 			

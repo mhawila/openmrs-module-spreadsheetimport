@@ -15,11 +15,8 @@ package org.openmrs.module.spreadsheetimport;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.sql.ResultSet;
-import java.sql.SQLSyntaxErrorException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -35,6 +32,8 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
+
+import javax.validation.constraints.NotNull;
 
 /**
  *
@@ -237,10 +236,8 @@ public class SpreadsheetImportUtil {
 			return null;
 		}
 		
-		List<String> columnNames = new Vector<String>();
-		for (Cell cell : firstRow) {
-			columnNames.add(cell.getStringCellValue());
-		}
+		List<String> columnNames = getColumnNamesFromFirstRow(sheet);
+
 		if (log.isDebugEnabled()) {
 			log.debug("Column names: " + columnNames.toString());
 		}
@@ -268,74 +265,11 @@ public class SpreadsheetImportUtil {
 			if (skipThisRow == true) {
 				skipThisRow = false;
 			} else {
-				boolean rowHasData = false;
+
 				Map<UniqueImport, Set<SpreadsheetImportTemplateColumn>> rowData = template
 				        .getMapOfUniqueImportToColumnSetSortedByImportIdx();
-				
-				for (UniqueImport uniqueImport : rowData.keySet()) {
-					Set<SpreadsheetImportTemplateColumn> columnSet = rowData.get(uniqueImport);
-					for (SpreadsheetImportTemplateColumn column : columnSet) {
-												
-						int idx = columnNames.indexOf(column.getName());
-						Cell cell = row.getCell(idx);
-						
-						Object value = null;
-						// check for empty cell (new Encounter)
-						if (cell == null) {
-							rowHasData = true;
-							column.setValue("");
-							continue;
-						}
-						
-						switch (cell.getCellType()) {
-							case Cell.CELL_TYPE_BOOLEAN:
-								value = new Boolean(cell.getBooleanCellValue());
-								break;
-							case Cell.CELL_TYPE_ERROR:
-								value = new Byte(cell.getErrorCellValue());
-								break;
-							case Cell.CELL_TYPE_FORMULA:
-							case Cell.CELL_TYPE_NUMERIC:
-								if (DateUtil.isCellDateFormatted(cell)) {
-									java.util.Date date = cell.getDateCellValue();
-									value = "'" + new java.sql.Timestamp(date.getTime()).toString() + "'";
-								} else {
-									value = cell.getNumericCellValue();
-								}
-								break;
-							case Cell.CELL_TYPE_STRING:
-								// Escape for SQL
-								value = "'" + cell.getRichStringCellValue() + "'";
-								break;
-						}
-						if (value != null) {
-							rowHasData = true;
-							column.setValue(value);
-						} else
-							column.setValue("");
-					}
-				}
-				
-				for (UniqueImport uniqueImport : rowData.keySet()) {
-					Set<SpreadsheetImportTemplateColumn> columnSet = rowData.get(uniqueImport);
-					boolean isFirst = true;
-					for (SpreadsheetImportTemplateColumn column : columnSet) {
+				boolean rowHasData = mergeDataInRowToMapUniqueImportToColumnsSetSortedByImportIdx(rowData, row, columnNames);
 
-						if (isFirst) {
-							// Should be same for all columns in unique import
-//							System.out.println("SpreadsheetImportUtil.importTemplate: column.getColumnPrespecifiedValues(): " + column.getColumnPrespecifiedValues().size());
-							if (column.getColumnPrespecifiedValues().size() > 0) {
-								Set<SpreadsheetImportTemplateColumnPrespecifiedValue> columnPrespecifiedValueSet = column.getColumnPrespecifiedValues();
-								for (SpreadsheetImportTemplateColumnPrespecifiedValue columnPrespecifiedValue : columnPrespecifiedValueSet) {
-//									System.out.println(columnPrespecifiedValue.getPrespecifiedValue().getValue());
-								}
-							}
-						}
-					}
-				}
-				
-				
-				
 				if (rowHasData) {
 					Exception exception = null;
 					try {
@@ -381,5 +315,73 @@ public class SpreadsheetImportUtil {
 		fos.close();
 		
 		return returnFile;
+	}
+
+	/**
+	 *
+	 * @param rowData - to be augmented with data in each column of the passed row.
+	 * @param row - spreadsheet row containing data to be imported
+	 * @param columnNames - the columnNames associated with the spreadsheet to be imported
+	 * @return boolean true if row has data, false otherwise
+	 */
+	public static boolean mergeDataInRowToMapUniqueImportToColumnsSetSortedByImportIdx(@NotNull final Map<UniqueImport, Set<SpreadsheetImportTemplateColumn>> rowData,
+																					   @NotNull final Row row,
+																					   @NotNull final List<String> columnNames) {
+		boolean rowHasData = false;
+
+		for (UniqueImport uniqueImport : rowData.keySet()) {
+			Set<SpreadsheetImportTemplateColumn> columnSet = rowData.get(uniqueImport);
+			for (SpreadsheetImportTemplateColumn column : columnSet) {
+
+				int idx = columnNames.indexOf(column.getName());
+				Cell cell = row.getCell(idx);
+
+				Object value = null;
+				// check for empty cell (new Encounter)
+				if (cell == null) {
+					rowHasData = true;
+					column.setValue("");
+					continue;
+				}
+
+				switch (cell.getCellType()) {
+					case Cell.CELL_TYPE_BOOLEAN:
+						value = new Boolean(cell.getBooleanCellValue());
+						break;
+					case Cell.CELL_TYPE_ERROR:
+						value = new Byte(cell.getErrorCellValue());
+						break;
+					case Cell.CELL_TYPE_FORMULA:
+					case Cell.CELL_TYPE_NUMERIC:
+						if (DateUtil.isCellDateFormatted(cell)) {
+							java.util.Date date = cell.getDateCellValue();
+							value = "'" + new java.sql.Timestamp(date.getTime()).toString() + "'";
+						} else {
+							value = cell.getNumericCellValue();
+						}
+						break;
+					case Cell.CELL_TYPE_STRING:
+						// Escape for SQL
+						value = "'" + cell.getRichStringCellValue() + "'";
+						break;
+				}
+				if (value != null) {
+					rowHasData = true;
+					column.setValue(value);
+				} else
+					column.setValue("");
+			}
+		}
+
+		return rowHasData;
+	}
+
+	public static List<String> getColumnNamesFromFirstRow(@NotNull final Sheet sheet) {
+		Row firstRow = sheet.getRow(0);
+		List<String> columnNames = new ArrayList<String>();
+		for (Cell cell : firstRow) {
+			columnNames.add(cell.getStringCellValue());
+		}
+		return columnNames;
 	}
 }
