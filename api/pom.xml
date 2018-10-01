@@ -49,13 +49,4 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
-
-	<resource>
-		<directory>src/test/resources</directory>
-		<filtering>false</filtering>
-		<includes>
-			<include>**/*.xsl</include>
-			<include>**/*.xslx</include>
-		</includes>
-	</resource>
 </project>
