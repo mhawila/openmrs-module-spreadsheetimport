@@ -291,7 +291,7 @@ public class DatabaseBackend {
 			
 			conn = DriverManager.getConnection(url, p.getProperty("connection.username"),
 			    p.getProperty("connection.password"));
-			
+
 			// Not NULLable columns
 			DatabaseMetaData dmd = conn.getMetaData();
 			List<String> columnNames = new ArrayList<String>();
@@ -369,7 +369,8 @@ public class DatabaseBackend {
 					Set<SpreadsheetImportTemplateColumn> columnSet = rowData.get(uniqueImport);
 					for (SpreadsheetImportTemplateColumn column : columnSet) {
 						Object columnValue = column.getValue();
-						if (!columnValue.equals("")) {
+						// only if it is encounter_id, otherwise it is data for new encounter to be created.
+						if ("encounter.encounter_id".equals(column.getTableDotColumn())) {
 							column.setGeneratedKey(columnValue.toString());
 							skip = true;
 							importedTables.add("encounter"); // fake as just imported encounter
@@ -402,9 +403,17 @@ public class DatabaseBackend {
 					
 					// SPECIAL TREATMENT 1
 					// if the patient_identifier.identifier is specified and it is linked to a person, then use that person instead
-					// note: patient.patient_id == person.person_id (http://forum.openmrs.org/viewtopic.php?f=2&t=436)				
-					UniqueImport patientIdentifier = new UniqueImport("patient_identifier", null);
-					if (rowData.containsKey(patientIdentifier)) {
+					// note: patient.patient_id == person.person_id (http://forum.openmrs.org/viewtopic.php?f=2&t=436)
+
+					// Find UniqueImport with patient_identifier tables if any.
+					UniqueImport patientIdentifier = null;
+					for(UniqueImport aUniqueImport: rowData.keySet()) {
+						if("patient_identifier".equals(aUniqueImport.getTableName())) {
+							patientIdentifier = aUniqueImport;
+							break;
+						}
+					}
+					if (patientIdentifier != null) {
 						Set<SpreadsheetImportTemplateColumn> patientIdentifierColumns = rowData.get(patientIdentifier);
 						for (SpreadsheetImportTemplateColumn patientIdentifierColumn : patientIdentifierColumns) {
 							String columnName = patientIdentifierColumn.getColumnName();
@@ -413,13 +422,13 @@ public class DatabaseBackend {
 								
 								sql = "select patient_id from patient_identifier where identifier = " + patientIdentifierColumn.getValue();
 								
-								System.out.println("Searching for existing patient of id " + patientIdentifierColumn.getValue());
+								log.debug("Searching for existing patient of id " + patientIdentifierColumn.getValue());
 								
 								ResultSet rs = s.executeQuery(sql);
 								if (rs.next()) {
 									String patientId = rs.getString(1);
 									
-									System.out.println("Found patient with patient_id = " + patientId);
+									log.debug("Found patient with patient_id = " + patientId);
 									
 									// no need to insert person, use the found patient_id as person_id
 									Set<SpreadsheetImportTemplateColumn> columnSet = rowData.get(uniqueImport);
@@ -512,39 +521,12 @@ public class DatabaseBackend {
 				Set<SpreadsheetImportTemplateColumnColumn> columnColumnsImportBefore = null;
 				boolean isFirst = true;
 				for (SpreadsheetImportTemplateColumn column : columnSet) {
-					// special treatment for encounter: simply ignore this loop since we don't want to insert encounter_id
-					if (isEncounter) {
-						columnPrespecifiedValueSet = column.getColumnPrespecifiedValues();
-						columnColumnsImportBefore = column.getColumnColumnsImportBefore();
-						
-						// inject date_created
-						columnNames += "date_created";
-						columnValues += "now()";
-						
-						// find encounter_datetime based on observation date time
-						java.sql.Date encounterDatetime = new java.sql.Date(System.currentTimeMillis());
-						Set<UniqueImport> uniqueImports = rowData.keySet();
-						for (UniqueImport u : uniqueImports) {
-							if ("obs".equals(u.getTableName())) {
-								Set<SpreadsheetImportTemplateColumn> obsColumns = rowData.get(u);
-								for (SpreadsheetImportTemplateColumn obsColumn : obsColumns) {
-									if ("obs_datetime".equals(obsColumn.getColumnName())) {
-										String obsColumnValue = obsColumn.getValue().toString();
-										obsColumnValue = obsColumnValue.substring(1, obsColumnValue.length()-1);
-										Date obsColumnValueDate = java.sql.Date.valueOf(obsColumnValue);
-										if (obsColumnValueDate.before(encounterDatetime))
-											encounterDatetime = obsColumnValueDate;
-									}
-								}
-							}
-						}
-						columnNames += ", encounter_datetime";
-						columnValues += ",'" + encounterDatetime.toString() + "'";
-						
-						isFirst = false;
+					// Check for empty values
+					Object columnValue = column.getValue();
+					if ("".equals(columnValue)) {
+						skip = true;
 						break;
-					}					
-					
+					}
 					// Check for duplicates
 					if (column.getDisallowDuplicateValue()) {
 						sql = "select " + column.getColumnName() + " from " + column.getTableName() + " where " + column.getColumnName() + " = " + column.getValue();
@@ -572,6 +554,48 @@ public class DatabaseBackend {
 					columnNames += column.getColumnName();
 					columnValues += column.getValue().toString();
 					
+				}
+
+				if(skip)		// Some value is blank.
+					continue;
+
+				// special treatment for encounter: set encounter_datetime if not provided yet.
+				if (isEncounter) {
+					boolean encounterDatetimeProvided = false;
+					for (SpreadsheetImportTemplateColumn column : columnSet) {
+						if ("encounter.encounter_datetime".equals(column.getTableDotColumn())) {
+							encounterDatetimeProvided = true;
+							break;
+						}
+					}
+
+					if(!encounterDatetimeProvided) {
+						// find encounter_datetime based on observation date time
+						java.sql.Date encounterDatetime = new java.sql.Date(System.currentTimeMillis());
+						Set<UniqueImport> uniqueImports = rowData.keySet();
+						for (UniqueImport u : uniqueImports) {
+							if ("obs".equals(u.getTableName())) {
+								Set<SpreadsheetImportTemplateColumn> obsColumns = rowData.get(u);
+								for (SpreadsheetImportTemplateColumn obsColumn : obsColumns) {
+									if ("obs_datetime".equals(obsColumn.getColumnName())) {
+										String obsColumnValue = obsColumn.getValue().toString();
+										obsColumnValue = obsColumnValue.substring(1, obsColumnValue.length() - 1);
+										Date obsColumnValueDate = java.sql.Date.valueOf(obsColumnValue);
+										if (obsColumnValueDate.before(encounterDatetime))
+											encounterDatetime = obsColumnValueDate;
+									}
+								}
+							}
+						}
+						if(isFirst) {
+							columnNames += "encounter_datetime";
+							columnValues += "'" + encounterDatetime.toString() + "'";
+							isFirst = false;
+						} else {
+							columnNames += ", encounter_datetime";
+							columnValues += ",'" + encounterDatetime.toString() + "'";
+						}
+					}
 				}
 							
 				// Data from pre-specified values
@@ -649,8 +673,23 @@ public class DatabaseBackend {
 						}
 					}
 					if (!hasDatetime) {
-						columnNames += ",obs_datetime";
-						columnValues += ",now()";						
+						String obsDatetimeValue = "now()";
+						for (UniqueImport u : rowData.keySet()) {
+							boolean breakOuter = false;
+							if ("encounter".equals(u.getTableName())) {
+								Set<SpreadsheetImportTemplateColumn> encounterColumns = rowData.get(u);
+								for (SpreadsheetImportTemplateColumn encounterColumn : encounterColumns) {
+									if ("encounter_datetime".equals(encounterColumn.getColumnName())) {
+										obsDatetimeValue = encounterColumn.getValue().toString();
+										breakOuter = true;
+										break;
+									}
+								}
+								if(breakOuter) break;
+							}
+						}
+						columnNames += ", obs_datetime";
+						columnValues += ", " + obsDatetimeValue;
 					}
 				}
 				
@@ -694,15 +733,16 @@ public class DatabaseBackend {
 				// SPECIAL TREATMENT: update Encounter ID back to the Excel file by returning it to the caller
 				if (isEncounter)
 					encounterId = rs.getString(1);
-				rs.close();				
-				
+				rs.close();
+
 				importedTables.add(uniqueImport.getTableName());
 			}
 		} catch (SQLSyntaxErrorException e) {
+			rollbackTransaction = true;
 			throw new SpreadsheetImportSQLSyntaxException(sql, e.getMessage());
 		} catch (Exception e) {
+			rollbackTransaction = true;
 			log.debug(e.toString());
-			exception = e;
 			throw new SpreadsheetImportSQLSyntaxException(sql, e.getMessage()); // TODO: for web debug purpose only, should comment out later
 		}
 		finally {

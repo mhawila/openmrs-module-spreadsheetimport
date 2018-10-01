@@ -15,6 +15,7 @@ package org.openmrs.module.spreadsheetimport;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -22,6 +23,7 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.Vector;
 
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.poi.ss.usermodel.Cell;
@@ -30,6 +32,7 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
+import org.openmrs.util.DatabaseUpdater;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -261,6 +264,8 @@ public class SpreadsheetImportUtil {
 		
 		// Process rows
 		boolean skipThisRow = true;
+		boolean encounterIdHeaderAdded = false;
+		int encounterCellIndex = columnNames.size();
 		for (Row row : sheet) {
 			if (skipThisRow == true) {
 				skipThisRow = false;
@@ -276,14 +281,20 @@ public class SpreadsheetImportUtil {
 						DatabaseBackend.validateData(rowData);
 						String encounterId = DatabaseBackend.importData(rowData, rollbackTransaction);
 						if (encounterId != null) {
+							if(!encounterIdHeaderAdded) {
+								Cell encounterIdCell = firstRow.getCell(encounterCellIndex);
+								if(encounterIdCell == null) {
+									encounterIdCell = firstRow.createCell(encounterCellIndex);
+									encounterIdCell.setCellValue("ENCOUNTER ID");
+								}
+							}
 							for (UniqueImport uniqueImport : rowData.keySet()) {
 								Set<SpreadsheetImportTemplateColumn> columnSet = rowData.get(uniqueImport);
 								for (SpreadsheetImportTemplateColumn column : columnSet) {
 									if ("encounter".equals(column.getTableName())) {						
-										int idx = columnNames.indexOf(column.getName());
-										Cell cell = row.getCell(idx);
+										Cell cell = row.getCell(encounterCellIndex);
 										if (cell == null)											
-											cell = row.createCell(idx);
+											cell = row.createCell(encounterCellIndex);
 										cell.setCellValue(encounterId);
 									}
 								}
@@ -307,7 +318,7 @@ public class SpreadsheetImportUtil {
 				}
 			}
 		}
-		
+
 		// write back Excel file to a temp location
 		File returnFile = File.createTempFile("imported_spreadsheet", ".xls");
 		FileOutputStream fos = new FileOutputStream(returnFile);
@@ -339,7 +350,6 @@ public class SpreadsheetImportUtil {
 				Object value = null;
 				// check for empty cell (new Encounter)
 				if (cell == null) {
-					rowHasData = true;
 					column.setValue("");
 					continue;
 				}
@@ -362,7 +372,7 @@ public class SpreadsheetImportUtil {
 						break;
 					case Cell.CELL_TYPE_STRING:
 						// Escape for SQL
-						value = "'" + cell.getRichStringCellValue() + "'";
+						value = "'" + SQLUtils.escapeString(cell.getRichStringCellValue().toString(), false) + "'";
 						break;
 				}
 				if (value != null) {
