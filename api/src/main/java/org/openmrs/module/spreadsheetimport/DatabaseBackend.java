@@ -350,6 +350,8 @@ public class DatabaseBackend {
 			s = conn.createStatement();
 			
 			List<String> importedTables = new ArrayList<String>();
+
+			boolean personDataAlreadySet = false;
 			
 			// Import
 			for (UniqueImport uniqueImport : rowData.keySet()) {
@@ -398,7 +400,7 @@ public class DatabaseBackend {
 				}
 				
 				 
-				if (isPerson) {
+				if (isPerson || isPatientIdentifier) {
 					boolean isIdentifierExist = false;
 					
 					// SPECIAL TREATMENT 1
@@ -407,10 +409,14 @@ public class DatabaseBackend {
 
 					// Find UniqueImport with patient_identifier tables if any.
 					UniqueImport patientIdentifier = null;
-					for(UniqueImport aUniqueImport: rowData.keySet()) {
-						if("patient_identifier".equals(aUniqueImport.getTableName())) {
-							patientIdentifier = aUniqueImport;
-							break;
+					if(isPatientIdentifier) {
+						patientIdentifier = uniqueImport;
+					} else {
+						for (UniqueImport aUniqueImport : rowData.keySet()) {
+							if ("patient_identifier".equals(aUniqueImport.getTableName())) {
+								patientIdentifier = aUniqueImport;
+								break;
+							}
 						}
 					}
 					if (patientIdentifier != null) {
@@ -426,22 +432,25 @@ public class DatabaseBackend {
 								
 								ResultSet rs = s.executeQuery(sql);
 								if (rs.next()) {
-									String patientId = rs.getString(1);
-									
-									log.debug("Found patient with patient_id = " + patientId);
-									
-									// no need to insert person, use the found patient_id as person_id
-									Set<SpreadsheetImportTemplateColumn> columnSet = rowData.get(uniqueImport);
-									for (SpreadsheetImportTemplateColumn column : columnSet) {
-										column.setGeneratedKey(patientId);
+									if(isPerson && !personDataAlreadySet) {
+										String patientId = rs.getString(1);
+
+										log.debug("Found patient with patient_id = " + patientId);
+
+										// no need to insert person, use the found patient_id as person_id
+										Set<SpreadsheetImportTemplateColumn> columnSet = rowData.get(uniqueImport);
+										for (SpreadsheetImportTemplateColumn column : columnSet) {
+											column.setGeneratedKey(patientId);
+										}
+										importedTables.add("person"); // fake as just imported person
+										importedTables.add("patient"); // fake as just imported patient
+										importedTables.add("patient_identifier"); // fake as just imported patient_identifier
+										importedTables.add("person_name"); // fake as just imported person_name
+										importedTables.add("person_address"); // fake as just imported person_address
+
+										personDataAlreadySet = true;
 									}
-											
-									importedTables.add("person"); // fake as just imported person
-									importedTables.add("patient"); // fake as just imported patient
-									importedTables.add("patient_identifier"); // fake as just imported patient_identifier
-									importedTables.add("person_name"); // fake as just imported person_name
-									importedTables.add("person_address"); // fake as just imported person_address
-									
+
 									skip = true;
 								}
 								rs.close();
@@ -508,10 +517,7 @@ public class DatabaseBackend {
 					}					
 					if (skip)
 						continue;
-				}				
-				
-				if (isPatientIdentifier && importedTables.contains("patient_identifier"))
-					continue;								
+				}
 				
 				// Data from columns
 				Set<SpreadsheetImportTemplateColumn> columnSet = rowData.get(uniqueImport);
@@ -833,16 +839,34 @@ public class DatabaseBackend {
 							rs = s.executeQuery(sql);
 							if (!rs.next())
 								throw new SpreadsheetImportTemplateValidationException("prespecified concept ID " + conceptId + " is not a numeric concept");
+							boolean hiAbsoluteWasNull = false;
+							boolean lowAbsoluteWasNull = false;
 							double hiAbsolute = rs.getDouble(1);
+							hiAbsoluteWasNull = rs.wasNull();
+
 							double lowAbsolute = rs.getDouble(2);
+							lowAbsoluteWasNull = rs.wasNull();
 							double value = 0.0;
 							try {
 								value = Double.parseDouble(obsColumn.getValue().toString());
 							} catch (NumberFormatException nfe) {
 								throw new SpreadsheetImportTemplateValidationException("concept value is not a number");
 							}
-							if (hiAbsolute < value || lowAbsolute > value)
-								throw new SpreadsheetImportTemplateValidationException("concept value " + value + " of column " + columnName + " is out of range " + lowAbsolute + " - " + hiAbsolute);
+							if(!hiAbsoluteWasNull && !lowAbsoluteWasNull) {
+								if (hiAbsolute < value || lowAbsolute > value)
+									throw new SpreadsheetImportTemplateValidationException("concept value " + value + " of column " +
+											columnName + " is out of range " + lowAbsolute + " - " + hiAbsolute);
+							} else if(!hiAbsoluteWasNull) {
+								if(hiAbsolute < value) {
+									throw new SpreadsheetImportTemplateValidationException("concept value " + value + " of column " +
+											columnName + " is greater than allowed highest value" + hiAbsolute);
+								}
+							} else if(!lowAbsoluteWasNull) {
+								if(lowAbsolute > value) {
+									throw new SpreadsheetImportTemplateValidationException("concept value " + value + " of column " +
+											columnName + " is less than allowed lowest value" + lowAbsolute);
+								}
+							}
 						} else if ("value_datetime".equals(columnName) || "obs_datetime".equals(columnName)) {
 							// skip if empty
 							if (obsColumn.getValue().equals(""))
