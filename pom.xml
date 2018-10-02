@@ -12,9 +12,9 @@
 	<url>http://openmrs.org</url>
 
 	<scm>
-		<connection>scm:svn:http://svn.openmrs.org/openmrs-modules/spreadsheetimport/trunk/</connection>
-		<developerConnection>scm:svn:http://svn.openmrs.org/openmrs-modules/spreadsheetimport/trunk/</developerConnection>
-		<url>http://svn.openmrs.org/openmrs-modules/spreadsheetimport/trunk/</url>
+		<connection>scm:git:https://github.com/mhawila/openmrs-module-spreadsheetimport</connection>
+		<developerConnection>scm:git:https://github.com/mhawila/openmrs-module-spreadsheetimport</developerConnection>
+		<url>https://github.com/mhawila/openmrs-module-spreadsheetimport</url>
 	</scm>
 
 	<modules>
