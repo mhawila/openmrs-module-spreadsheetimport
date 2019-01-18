@@ -6,7 +6,7 @@
 		USE:
 			The diffs are ordered by datamodel version number.
 			The script can be run in a top down fashion and is
-			expected to not failor overwrite old data
+			expected to not fail or overwrite old data
 		
 		EXPECT:
 			- "use business-database-name;" was called prior to
@@ -24,8 +24,8 @@
 			  `id` int(32) NOT NULL auto_increment,
               `name` varchar(100) NOT NULL,
 			  `description` varchar(1000) NOT NULL,
-			  `creator` int(11) NOT NULL default '0',
-			  `date_created` datetime NOT NULL default '0000-00-00 00:00:00',
+			  `creator` int(11) NOT NULL default 0,
+			  `date_created` datetime NOT NULL,
 			  `changed_by` int(11) default NULL,
   			  `date_changed` datetime default NULL,
 			  PRIMARY KEY  (`id`),
@@ -91,8 +91,8 @@
 			  `id` int(32) NOT NULL auto_increment,
               `name` varchar(100) NOT NULL,
 			  `description` varchar(1000) NOT NULL,
-			  `creator` int(11) NOT NULL default '0',
-			  `date_created` datetime NOT NULL default '0000-00-00 00:00:00',
+			  `creator` int(11) NOT NULL default 0,
+			  `date_created` datetime NOT NULL,,
 			  `changed_by` int(11) default NULL,
   			  `date_changed` datetime default NULL,
 			  PRIMARY KEY  (`id`),
@@ -145,7 +145,7 @@
 			  CONSTRAINT `Pre-specifived value which is being mapped to a template column` FOREIGN KEY (`template_prespecified_value_id`) REFERENCES `spreadsheetimport_template_prespecified_value` (`id`)
 			) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 		   ALTER TABLE  `spreadsheetimport_template` 
-		   		ADD  `encounter` BOOLEAN NULL DEFAULT  '0' AFTER  `description` ,
+		   		ADD  `encounter` BOOLEAN NULL DEFAULT 0 AFTER  `description` ,
 				ADD  `target_form` VARCHAR( 255 ) NULL DEFAULT NULL AFTER  `encounter`;			
 		</sql>
 	</diff>
